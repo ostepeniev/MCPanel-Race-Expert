@@ -283,6 +283,7 @@ function exportData() {
   const inProduction = rand(1100, 1600);
   const notPacked = Math.round(inProduction * 0.42);
   const packedNotShipped = Math.round(inProduction * 0.28);
+  const totalNotShipped = inProduction;
   const totalDelayed = rand(310, 520);
 
   const shipTrend = [];
@@ -291,29 +292,40 @@ function exportData() {
     const isWeekend = d.getDay() === 0 || d.getDay() === 6;
     shipTrend.push({
       name: d.toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit' }),
-      shipped: jitter(shippedYesterday * (isWeekend ? 0.55 : 1.1), 0.15),
+      value: jitter(shippedYesterday * (isWeekend ? 0.55 : 1.1), 0.15),
     });
   }
 
+  const delayValues = {
+    over_24h: rand(180, 260),
+    over_48h: rand(90, 150),
+    over_72h: rand(20, 55),
+    over_96h: rand(10, 30),
+    over_120h: rand(3, 12),
+    over_144h: rand(0, 5),
+    over_168h: rand(0, 3),
+  };
+
   const warehouseData = {
-    queue: { inProduction, notPacked, packedNotShipped },
-    shipped: {
-      yesterday: shippedYesterday,
-      month: shippedMonth,
-      yesterdayChange: pctChange(shippedYesterday, shippedPrevMonth / 30),
-      monthChange: pctChange(shippedMonth, Math.round(shippedPrevMonth * monthProgress)),
+    yesterday: {
+      shipped: shippedYesterday,
+      change: pctChange(shippedYesterday, shippedPrevMonth / 30),
     },
-    delays: [
-      { hours: 24, count: rand(180, 260) },
-      { hours: 48, count: rand(90, 150) },
-      { hours: 72, count: rand(20, 55) },
-      { hours: 96, count: rand(10, 30) },
-      { hours: 120, count: rand(3, 12) },
-      { hours: 144, count: rand(0, 5) },
-      { hours: 168, count: rand(0, 3) },
-    ],
+    currentMonth: {
+      shipped: shippedMonth,
+      change: pctChange(shippedMonth, Math.round(shippedPrevMonth * monthProgress)),
+    },
+    queue: {
+      in_production: inProduction,
+      not_packed: notPacked,
+      packed_not_shipped: packedNotShipped,
+      total_not_shipped: totalNotShipped,
+    },
+    delays: delayValues,
     totalDelayed,
-    shipTrend,
+    shipmentTrend: shipTrend,
+    // Also keep shipTrend for Command Center
+    shipTrend: shipTrend.map(s => ({ ...s, shipped: s.value })),
   };
   fs.writeFileSync(path.join(OUTPUT_DIR, 'warehouse.json'), JSON.stringify(warehouseData));
   console.log('  ✓ warehouse.json');
