@@ -388,6 +388,111 @@ function exportData() {
   console.log('  ✓ finance.json');
 
   // ═══════════════════════════════════════════════════════════
+  // 5. COMMAND CENTER (aggregated data for 7 CEO features)
+  // ═══════════════════════════════════════════════════════════
+
+  // 30-day revenue trend
+  const revenueTrend30 = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+    const dayRev = jitter(DAILY_AVG_REVENUE * (isWeekend ? 0.65 : 1.12), 0.18);
+    const dayOrds = jitter(DAILY_AVG_ORDERS * (isWeekend ? 0.65 : 1.12), 0.18);
+    revenueTrend30.push({
+      date: d.toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit' }),
+      revenue: dayRev,
+      orders: dayOrds,
+    });
+  }
+
+  // Month-over-month comparison
+  const prevMonth = {
+    orders: PREV_MONTH_ORDERS,
+    revenue: PREV_MONTH_REVENUE,
+    avg_check: Math.round(PREV_MONTH_REVENUE / PREV_MONTH_ORDERS),
+    margin: jitter(MARGIN_PCT * 10, 0.05) / 10,
+    gross_profit: Math.round(PREV_MONTH_REVENUE * MARGIN_PCT / 100),
+    shipped: Math.round(PREV_MONTH_ORDERS * 0.78),
+  };
+  prevMonth.profitability = Math.round((prevMonth.gross_profit - Math.round(PREV_MONTH_REVENUE * 0.38)) / PREV_MONTH_REVENUE * 1000) / 10;
+
+  const currentMonth = {
+    orders: monthOrders,
+    revenue: monthRevenue,
+    avg_check: Math.round(monthRevenue / Math.max(monthOrders, 1)),
+    margin: MARGIN_PCT,
+    gross_profit: Math.round(monthRevenue * MARGIN_PCT / 100),
+    shipped: shippedMonth,
+  };
+  currentMonth.profitability = Math.round((currentMonth.gross_profit - Math.round(MONTHLY_REVENUE * 0.38) * monthProgress) / monthRevenue * 1000) / 10;
+
+  // Weekly winners (TOP-5 products this week)
+  const weeklyWinners = [
+    { name: 'Гель SiS Go Isotonic Gel (апельсин) 60мл', qty: rand(2800, 3400), revenue: rand(280000, 340000), margin: jitter(52, 0.1) },
+    { name: 'Maurten GEL 100 (нейтральний) 40г', qty: rand(1800, 2400), revenue: rand(252000, 310000), margin: jitter(48, 0.1) },
+    { name: 'PFH 1500 Tube, 10 таблеток', qty: rand(1500, 2000), revenue: rand(195000, 260000), margin: jitter(55, 0.1) },
+    { name: 'SiS Beta Fuel + Electrolyte 60мл', qty: rand(1200, 1600), revenue: rand(168000, 224000), margin: jitter(50, 0.1) },
+    { name: 'Набір харчування SiS для бігу 42 км', qty: rand(380, 520), revenue: rand(312000, 426000), margin: jitter(42, 0.1) },
+  ];
+
+  // Goal tracker
+  const GOAL_REVENUE = 25_000_000;
+  const GOAL_ORDERS = 25000;
+  const GOAL_MARGIN = 45;
+  const GOAL_SHIP_TIME = 24; // hours avg
+  const avgShipTime = jitter(18, 0.25);
+  const goals = {
+    revenue: { target: GOAL_REVENUE, current: monthRevenue, projected: Math.round(monthRevenue / monthProgress) },
+    orders: { target: GOAL_ORDERS, current: monthOrders, projected: Math.round(monthOrders / monthProgress) },
+    margin: { target: GOAL_MARGIN, current: MARGIN_PCT },
+    ship_time: { target: GOAL_SHIP_TIME, current: avgShipTime },
+  };
+
+  // Attention required (actionable alerts)
+  const alerts = [];
+  const delOver48 = (delayValues.over_48h || 0) + (delayValues.over_72h || 0) + (delayValues.over_96h || 0) + (delayValues.over_120h || 0) + (delayValues.over_144h || 0) + (delayValues.over_168h || 0);
+  if (delOver48 > 0) alerts.push({ type: 'danger', icon: '🚨', text: `${delOver48} замовлень чекають відвантаження >48 годин`, action: 'Перейти до Складу' });
+  const lowStockCount = rand(8, 18);
+  alerts.push({ type: 'warning', icon: '📦', text: `${lowStockCount} товарів із залишком менше 10 шт`, action: 'Перевірити запаси' });
+  const unpaidOrders = ordersData.payments.unpaid;
+  if (unpaidOrders > 500) alerts.push({ type: 'warning', icon: '💳', text: `${unpaidOrders} неоплачених замовлень в обробці`, action: 'Переглянути' });
+  const marginDrop = rand(0, 1);
+  if (marginDrop) alerts.push({ type: 'info', icon: '📉', text: `Маржинальність бренду "226ERS" знизилась на ${rand(3,8)}% за тиждень`, action: 'Аналізувати' });
+  const returnRate = (rand(18, 35) / 10);
+  alerts.push({ type: 'info', icon: '↩️', text: `Відсоток повернень за місяць: ${returnRate}%`, action: 'Деталі' });
+
+  // Unit Economics
+  const totalCustomers = rand(14000, 18000);
+  const repeatCustomers = Math.round(totalCustomers * rand(28, 35) / 100);
+  const unitEcon = {
+    aov: Math.round(monthRevenue / Math.max(monthOrders, 1)), // Average Order Value
+    arpu: Math.round(monthRevenue / Math.max(totalCustomers, 1)), // Avg Revenue Per User
+    repeat_rate: Math.round(repeatCustomers / totalCustomers * 1000) / 10,
+    return_rate: returnRate,
+    orders_per_customer: Math.round(monthOrders / totalCustomers * 100) / 100,
+    total_customers: totalCustomers,
+    new_customers: totalCustomers - repeatCustomers,
+  };
+
+  const commandData = {
+    revenueTicker: {
+      current: monthRevenue,
+      target: GOAL_REVENUE,
+      dailyAvg: DAILY_AVG_REVENUE,
+      monthProgress,
+    },
+    monthComparison: { current: currentMonth, previous: prevMonth, monthProgress },
+    weeklyWinners,
+    goals,
+    alerts,
+    revenueTrend30,
+    unitEcon,
+  };
+
+  fs.writeFileSync(path.join(OUTPUT_DIR, 'command.json'), JSON.stringify(commandData));
+  console.log('  ✓ command.json');
+
+  // ═══════════════════════════════════════════════════════════
   console.log(`
 ✅ Export complete!
 
