@@ -84,7 +84,7 @@ export default function CommandCenter() {
         />
         <KPICard
           icon={<span style={{ fontSize: '1.25rem' }}>🏭</span>}
-          value={warehouse?.queue?.total_not_shipped}
+          value={warehouse?.queue?.inProduction}
           label="Не відвантажено"
           isLoading={warehouseLoading}
         />
@@ -195,8 +195,8 @@ export default function CommandCenter() {
             <div className="skeleton-line" style={{ height: '200px', width: '100%' }} />
           ) : (
             <MiniChart
-              data={warehouse?.shipmentTrend || []}
-              dataKey="value"
+              data={warehouse?.shipTrend || []}
+              dataKey="shipped"
               color="#00E676"
               height={200}
               showAxis={true}
