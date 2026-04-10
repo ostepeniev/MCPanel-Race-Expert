@@ -790,7 +790,144 @@ button {
 .cmd-unit-row strong { font-size: 1.125rem; }
 
 /* ═══════════════════════════════════════════════════════════════
+   LAYOUT UTILITIES
+   ═══════════════════════════════════════════════════════════════ */
+.page-section { margin-bottom: var(--space-xl); }
+
+/* Auto-responsive KPI grids — CSS drives column count */
+.mobile-kpi-2 { grid-template-columns: repeat(4, 1fr); }
+.mobile-kpi-3 { grid-template-columns: repeat(3, 1fr); }
+
+/* ═══════════════════════════════════════════════════════════════
+   DATA TABLE (dt-*)
+   ═══════════════════════════════════════════════════════════════ */
+.dt-wrapper {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-card);
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+}
+
+.dt-header {
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.dt-title { font-weight: 600; font-size: 0.9375rem; }
+.dt-subtitle { font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px; }
+.dt-body { padding: var(--space-lg); }
+
+.dt-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  min-width: 480px; /* ensures table is scrollable on mobile, not squished */
+}
+
+.dt-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.dt-table th {
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-card-solid);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.dt-table th:hover { color: var(--text-secondary); }
+.dt-table th.sorted { color: var(--text-primary); }
+
+.dt-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.dt-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+.dt-table tbody tr:last-child td { border-bottom: none; }
+
+.dt-table .text-right { text-align: right; }
+.dt-table .number { font-variant-numeric: tabular-nums; }
+
+.dt-th-inner { display: inline-flex; align-items: center; gap: 4px; }
+.dt-empty { text-align: center; color: var(--text-muted); padding: 32px !important; }
+
+/* ═══════════════════════════════════════════════════════════════
+   FINANCE PAGE (fin-*)
+   ═══════════════════════════════════════════════════════════════ */
+.fin-big-number { margin-bottom: var(--space-lg); }
+.fin-big-label { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px; }
+.fin-big-value { font-size: 1.75rem; font-weight: 800; }
+.fin-big-value.green { color: var(--accent-green); }
+.fin-big-value.blue { color: var(--accent-blue); }
+.fin-big-value.red { color: var(--accent-red); }
+.fin-mid-value { font-size: 1.5rem; font-weight: 700; }
+.fin-mid-value.purple { color: var(--accent-purple); }
+
+.fin-net-balance {
+  text-align: center;
+  background: linear-gradient(135deg, rgba(179, 136, 255, 0.06), rgba(0, 230, 118, 0.04));
+  border-color: rgba(179, 136, 255, 0.15);
+}
+.fin-net-formula { font-size: 0.6875rem; color: var(--text-muted); margin-bottom: 12px; }
+.fin-net-value { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.03em; }
+
+/* ═══════════════════════════════════════════════════════════════
+   ORDERS PAGE (ord-*)
+   ═══════════════════════════════════════════════════════════════ */
+.ord-big-val { font-size: 1.25rem; font-weight: 700; }
+.ord-changes { display: flex; gap: var(--space-sm); flex-wrap: wrap; margin-top: var(--space-xs); }
+.ord-payment-item { padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); }
+.ord-payment-top { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.8125rem; }
+.ord-payment-count { font-weight: 700; font-size: 1rem; }
+.ord-payment-pct { font-size: 0.625rem; color: var(--text-muted); margin-top: 3px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   WAREHOUSE PAGE (wh-*)
+   ═══════════════════════════════════════════════════════════════ */
+.wh-queue-item { padding: 10px 12px; border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); }
+.wh-queue-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.wh-queue-label { font-size: 0.8125rem; }
+.wh-queue-value { font-size: 1.125rem; font-weight: 700; }
+
+.wh-delay-row {
+  display: grid; grid-template-columns: 60px 1fr 36px;
+  align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 8px;
+  border: 1px solid;
+}
+.wh-delay-label { font-size: 0.75rem; font-weight: 600; }
+.wh-delay-bar { flex: 1; }
+.wh-delay-count { font-size: 1rem; font-weight: 700; text-align: right; }
+
+.wh-total-delayed {
+  margin-top: var(--space-lg); padding: 10px 14px;
+  border-radius: 8px; background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-card);
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: 600; font-size: 0.875rem;
+}
+.wh-total-value { font-size: 1.375rem; font-weight: 800; }
+
+/* ═══════════════════════════════════════════════════════════════
    SPLASH SCREEN
+
 
    ═══════════════════════════════════════════════════════════════ */
 .splash-overlay {
@@ -1013,6 +1150,17 @@ button {
   .cmd-ticker-value { font-size: 2.25rem; }
   .cmd-winner { grid-template-columns: 28px 1fr auto 40px; }
 
+  /* ─── KPI auto grids ────────────────────────────────── */
+  .mobile-kpi-2 { grid-template-columns: repeat(2, 1fr); }
+  .mobile-kpi-3 { grid-template-columns: repeat(3, 1fr); }
+
+  /* ─── Grid-3 → 1 col on tablet ─────────────────────── */
+  .grid-3 { grid-template-columns: 1fr; }
+
+  /* ─── Finance ─────────────────────────────────────── */
+  .fin-big-value { font-size: 1.5rem; }
+  .fin-net-value { font-size: 2rem; }
+
   /* Splash responsive */
   .splash-brand { font-size: 2.25rem; }
   .splash-chevrons { width: 80px; height: 67px; }
@@ -1155,23 +1303,44 @@ button {
   .cmd-unit-row strong { font-size: 0.9375rem; }
 
   /* ─── Section headers ────────────────────────────── */
-  .section-title {
-    font-size: 0.9375rem;
-  }
+  .section-title { font-size: 0.9375rem; }
 
-  /* ─── Data Tables — horizontal scroll ────────────── */
-  .data-table-wrapper {
+  /* ─── DataTable — full width, scroll horizontal ──── */
+  .dt-wrapper {
+    border-radius: var(--radius-md);
     margin: 0 calc(var(--space-sm) * -1);
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
   }
+  .dt-header { padding: var(--space-sm) var(--space-md); }
+  .dt-title { font-size: 0.8125rem; }
+  .dt-table { min-width: 400px; font-size: 0.75rem; }
+  .dt-table th { padding: 8px 10px; font-size: 0.5625rem; }
+  .dt-table td { padding: 8px 10px; }
 
-  .data-table th,
-  .data-table td {
-    padding: var(--space-sm) var(--space-md);
-    font-size: 0.6875rem;
-  }
+  /* ─── KPI auto grids mobile ─────────────────────── */
+  .mobile-kpi-2 { grid-template-columns: repeat(2, 1fr) !important; }
+  .mobile-kpi-3 { grid-template-columns: repeat(3, 1fr) !important; }
+
+  /* ─── Page section spacing ──────────────────────── */
+  .page-section { margin-bottom: var(--space-lg); }
+
+  /* ─── Finance phone ────────────────────────────── */
+  .fin-big-value { font-size: 1.375rem; }
+  .fin-mid-value { font-size: 1.25rem; }
+  .fin-net-value { font-size: 1.75rem; }
+  .fin-net-formula { font-size: 0.5625rem; }
+
+  /* ─── Orders phone ─────────────────────────────── */
+  .ord-big-val { font-size: 1.125rem; }
+  .ord-payment-top { font-size: 0.75rem; }
+
+  /* ─── Warehouse phone ──────────────────────────── */
+  .wh-delay-row { grid-template-columns: 48px 1fr 30px; gap: 6px; padding: 6px 8px; }
+  .wh-delay-label { font-size: 0.6875rem; }
+  .wh-delay-count { font-size: 0.875rem; }
+  .wh-queue-label { font-size: 0.75rem; }
+  .wh-queue-value { font-size: 1rem; }
+  .wh-total-delayed { font-size: 0.75rem; padding: 8px 10px; }
+  .wh-total-value { font-size: 1.125rem; }
 
   /* ─── Charts ─────────────────────────────────────── */
   .chart-container {
@@ -1283,6 +1452,17 @@ button {
   .cmd-ticker-value { font-size: 1.5rem; }
   .cmd-goals-grid { grid-template-columns: repeat(2, 1fr); gap: 4px; }
   .cmd-unit-grid { grid-template-columns: repeat(2, 1fr); gap: 4px; }
+
+  /* KPI grids small phone */
+  .mobile-kpi-3 { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Finance small phone */
+  .fin-big-value { font-size: 1.125rem; }
+  .fin-net-value { font-size: 1.5rem; }
+
+  /* DataTable small phone */
+  .dt-table { min-width: 360px; }
+  .dt-table th, .dt-table td { padding: 6px 8px; }
 
   /* Splash even smaller */
   .splash-brand { font-size: 1.375rem; }

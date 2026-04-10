@@ -25,27 +25,22 @@ const CustomTooltip = ({ active, payload, label }) => {
 export default function SalesPage() {
   const { data, isLoading } = useSWR('/api/dashboard/sales?period=current_month', fetcher, { refreshInterval: 60000 });
 
+  // Show fewer columns on all screens — keep it scannable  
   const salesColumns = [
     { key: 'name', label: 'Назва', width: '30%' },
     { key: 'total_qty', label: 'Кількість', align: 'right', format: 'number' },
     { key: 'revenue', label: 'Виручка (₴)', align: 'right', format: 'currency' },
     { key: 'avg_price', label: 'Сер. ціна (₴)', align: 'right', format: 'currency' },
-    { key: 'margin', label: 'Маржа (%)', align: 'right', format: 'percent' },
-    { key: 'gross_profit', label: 'Вал. прибуток (₴)', align: 'right', format: 'currency' },
-    { key: 'share', label: 'Частка (%)', align: 'right', format: 'percent' },
   ];
 
   const brandColumns = salesColumns.map(c => c.key === 'name' ? { ...c, key: 'brand', label: 'Бренд' } : c);
   const supplierColumns = salesColumns.map(c => c.key === 'name' ? { ...c, key: 'supplier', label: 'Постачальник' } : c);
   const categoryColumns = salesColumns.map(c => c.key === 'name' ? { ...c, key: 'category', label: 'Категорія' } : c);
   const bundleColumns = [
-    { key: 'bundle_name', label: 'Назва набору', width: '30%' },
-    { key: 'total_qty', label: 'Кількість', align: 'right', format: 'number' },
+    { key: 'bundle_name', label: 'Набір', width: '35%' },
+    { key: 'total_qty', label: 'К-ть', align: 'right', format: 'number' },
     { key: 'revenue', label: 'Виручка (₴)', align: 'right', format: 'currency' },
-    { key: 'margin', label: 'Маржа (%)', align: 'right', format: 'percent' },
-    { key: 'gross_profit', label: 'Вал. прибуток (₴)', align: 'right', format: 'currency' },
-    { key: 'orders_share', label: 'Частка замовлень (%)', align: 'right', format: 'percent' },
-    { key: 'revenue_share', label: 'Частка виручки (%)', align: 'right', format: 'percent' },
+    { key: 'margin', label: 'Маржа', align: 'right', format: 'percent' },
   ];
 
   return (
@@ -55,9 +50,9 @@ export default function SalesPage() {
         <p className="page-subtitle">Блок 2 — дані з 1C (поточний місяць)</p>
       </div>
 
-      {/* Total revenue KPI */}
+      {/* KPIs */}
       {!isLoading && data && (
-        <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: 'var(--space-xl)' }}>
+        <div className="kpi-grid mobile-kpi-3" style={{ marginBottom: 'var(--space-xl)' }}>
           <div className="kpi-card">
             <div className="kpi-icon">💰</div>
             <div className="kpi-value">{data.totalRevenue?.toLocaleString('uk-UA')} ₴</div>
@@ -71,44 +66,38 @@ export default function SalesPage() {
           <div className="kpi-card">
             <div className="kpi-icon">📦</div>
             <div className="kpi-value">{data.byCategories?.length || 0}</div>
-            <div className="kpi-label">Категорій з продажами</div>
+            <div className="kpi-label">Категорій</div>
           </div>
         </div>
       )}
 
-      {/* Sales by Brands */}
-      <div style={{ marginBottom: 'var(--space-xl)' }}>
+      {/* Tables */}
+      <div className="page-section">
         <DataTable columns={brandColumns} data={data?.byBrands} isLoading={isLoading} title="🏷️ Продажі по брендах" subtitle="Сортується по виручці" />
       </div>
-
-      {/* Sales by Suppliers */}
-      <div style={{ marginBottom: 'var(--space-xl)' }}>
+      <div className="page-section">
         <DataTable columns={supplierColumns} data={data?.bySuppliers} isLoading={isLoading} title="🚚 Продажі по постачальниках" />
       </div>
-
-      {/* Sales by Bundles */}
-      <div style={{ marginBottom: 'var(--space-xl)' }}>
+      <div className="page-section">
         <DataTable columns={bundleColumns} data={data?.byBundles} isLoading={isLoading} title="📦 Продажі по наборах" />
       </div>
-
-      {/* Sales by Categories */}
-      <div style={{ marginBottom: 'var(--space-xl)' }}>
+      <div className="page-section">
         <DataTable columns={categoryColumns} data={data?.byCategories} isLoading={isLoading} title="📂 Продажі по категоріях" />
       </div>
 
       {/* TOP-10 Charts */}
       <div className="grid-2">
         <div className="glass-card-static">
-          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 'var(--space-lg)' }}>🏆 ТОП-10 по виручці</h3>
+          <h3 className="cmd-card-title">🏆 ТОП-10 по виручці</h3>
           {isLoading ? (
             <div>{[1,2,3,4,5].map(i => <div key={i} className="skeleton-line w-80" style={{ height: '1.5rem', marginBottom: '8px' }} />)}</div>
           ) : (
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={data?.topByRevenue?.slice(0, 10)} layout="vertical" margin={{ left: 10, right: 20 }}>
-                <XAxis type="number" tick={{ fontSize: 10, fill: '#7E7E96' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} />
-                <YAxis type="category" dataKey="name" width={180} tick={{ fontSize: 10, fill: '#7E7E96' }} axisLine={false} tickLine={false} tickFormatter={(v) => v.length > 28 ? v.substring(0, 28) + '…' : v} />
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={data?.topByRevenue?.slice(0, 10)} layout="vertical" margin={{ left: 0, right: 10, top: 0, bottom: 0 }}>
+                <XAxis type="number" tick={{ fontSize: 9, fill: '#7E7E96' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} />
+                <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 9, fill: '#7E7E96' }} axisLine={false} tickLine={false} tickFormatter={(v) => v.length > 18 ? v.substring(0, 18) + '…' : v} />
                 <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="revenue" radius={[0, 4, 4, 0]} barSize={16}>
+                <Bar dataKey="revenue" radius={[0, 4, 4, 0]} barSize={14}>
                   {data?.topByRevenue?.slice(0, 10).map((_, i) => (
                     <Cell key={i} fill={COLORS[i % COLORS.length]} />
                   ))}
@@ -119,16 +108,16 @@ export default function SalesPage() {
         </div>
 
         <div className="glass-card-static">
-          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 'var(--space-lg)' }}>💎 ТОП-10 по прибутку</h3>
+          <h3 className="cmd-card-title">💎 ТОП-10 по прибутку</h3>
           {isLoading ? (
             <div>{[1,2,3,4,5].map(i => <div key={i} className="skeleton-line w-80" style={{ height: '1.5rem', marginBottom: '8px' }} />)}</div>
           ) : (
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={data?.topByProfit?.slice(0, 10)} layout="vertical" margin={{ left: 10, right: 20 }}>
-                <XAxis type="number" tick={{ fontSize: 10, fill: '#7E7E96' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} />
-                <YAxis type="category" dataKey="name" width={180} tick={{ fontSize: 10, fill: '#7E7E96' }} axisLine={false} tickLine={false} tickFormatter={(v) => v.length > 28 ? v.substring(0, 28) + '…' : v} />
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={data?.topByProfit?.slice(0, 10)} layout="vertical" margin={{ left: 0, right: 10, top: 0, bottom: 0 }}>
+                <XAxis type="number" tick={{ fontSize: 9, fill: '#7E7E96' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} />
+                <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 9, fill: '#7E7E96' }} axisLine={false} tickLine={false} tickFormatter={(v) => v.length > 18 ? v.substring(0, 18) + '…' : v} />
                 <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="profit" radius={[0, 4, 4, 0]} barSize={16}>
+                <Bar dataKey="profit" radius={[0, 4, 4, 0]} barSize={14}>
                   {data?.topByProfit?.slice(0, 10).map((_, i) => (
                     <Cell key={i} fill={COLORS[i % COLORS.length]} />
                   ))}
