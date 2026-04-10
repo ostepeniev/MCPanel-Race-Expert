@@ -4,19 +4,16 @@ import { useState } from 'react';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 
 /**
- * DataTable — Responsive table component.
- * Desktop: classic table layout
- * Mobile: scrollable table in a horizontal scroll container
+ * DataTable — Responsive data display.
  * 
- * Props:
- *   columns — [{ key, label, align?, format?, width?, hideMobile? }]
- *   data — array of row objects
- *   isLoading — show skeleton
- *   title / subtitle — header text
+ * Desktop (>768px): classic scrollable table
+ * Mobile (≤768px): card list — each row becomes a card 
+ *   with the first column as title and remaining columns as label:value pairs
  */
 export default function DataTable({ columns, data, isLoading = false, title = '', subtitle = '' }) {
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState('desc');
+  const [expanded, setExpanded] = useState(true);
 
   const handleSort = (key) => {
     if (sortKey === key) {
@@ -34,9 +31,9 @@ export default function DataTable({ columns, data, isLoading = false, title = ''
         if (typeof aVal === 'number' && typeof bVal === 'number') {
           return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
         }
-        const aStr = String(aVal || '');
-        const bStr = String(bVal || '');
-        return sortDir === 'asc' ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
+        return sortDir === 'asc'
+          ? String(aVal || '').localeCompare(String(bVal || ''))
+          : String(bVal || '').localeCompare(String(aVal || ''));
       })
     : (data || []);
 
@@ -66,63 +63,93 @@ export default function DataTable({ columns, data, isLoading = false, title = ''
     );
   }
 
-  // Determine which columns are "primary" (first column) vs "data" (rest)
   const primaryCol = columns[0];
   const dataCols = columns.slice(1);
 
   return (
     <div className="dt-wrapper">
       {title && (
-        <div className="dt-header">
-          <div className="dt-title">{title}</div>
-          {subtitle && <div className="dt-subtitle">{subtitle}</div>}
+        <div className="dt-header" onClick={() => setExpanded(!expanded)} style={{ cursor: 'pointer' }}>
+          <div className="dt-header-row">
+            <div>
+              <div className="dt-title">{title}</div>
+              {subtitle && <div className="dt-subtitle">{subtitle}</div>}
+            </div>
+            <span className="dt-toggle">{expanded ? '▾' : '▸'} {sortedData.length}</span>
+          </div>
         </div>
       )}
 
-      {/* Desktop: scrollable table */}
-      <div className="dt-scroll">
-        <table className="dt-table">
-          <thead>
-            <tr>
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  onClick={() => handleSort(col.key)}
-                  className={`${sortKey === col.key ? 'sorted' : ''} ${col.align === 'right' ? 'text-right' : ''}`}
-                  style={col.width ? { width: col.width } : undefined}
-                >
-                  <span className="dt-th-inner">
-                    {col.label}
-                    {sortKey === col.key && (
-                      sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />
-                    )}
-                  </span>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {sortedData.length === 0 ? (
-              <tr>
-                <td colSpan={columns.length} className="dt-empty">Немає даних</td>
-              </tr>
-            ) : (
-              sortedData.map((row, idx) => (
-                <tr key={row.id || idx}>
+      {expanded && (
+        <>
+          {/* Desktop: scrollable table */}
+          <div className="dt-scroll dt-desktop-only">
+            <table className="dt-table">
+              <thead>
+                <tr>
                   {columns.map((col) => (
-                    <td
+                    <th
                       key={col.key}
-                      className={col.align === 'right' ? 'text-right number' : ''}
+                      onClick={() => handleSort(col.key)}
+                      className={`${sortKey === col.key ? 'sorted' : ''} ${col.align === 'right' ? 'text-right' : ''}`}
+                      style={col.width ? { width: col.width } : undefined}
                     >
-                      {col.render ? col.render(row[col.key], row) : formatCell(col, row[col.key])}
-                    </td>
+                      <span className="dt-th-inner">
+                        {col.label}
+                        {sortKey === col.key && (
+                          sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />
+                        )}
+                      </span>
+                    </th>
                   ))}
                 </tr>
-              ))
+              </thead>
+              <tbody>
+                {sortedData.length === 0 ? (
+                  <tr><td colSpan={columns.length} className="dt-empty">Немає даних</td></tr>
+                ) : (
+                  sortedData.map((row, idx) => (
+                    <tr key={row.id || idx}>
+                      {columns.map((col) => (
+                        <td key={col.key} className={col.align === 'right' ? 'text-right number' : ''}>
+                          {col.render ? col.render(row[col.key], row) : formatCell(col, row[col.key])}
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile: card list */}
+          <div className="dt-mobile-only">
+            {sortedData.length === 0 ? (
+              <div className="dt-empty-mobile">Немає даних</div>
+            ) : (
+              <div className="dt-card-list">
+                {sortedData.map((row, idx) => (
+                  <div key={row.id || idx} className="dt-card">
+                    <div className="dt-card-name">
+                      {row[primaryCol.key]}
+                    </div>
+                    <div className="dt-card-metrics">
+                      {dataCols.map((col) => (
+                        <div key={col.key} className="dt-card-metric">
+                          <span className="dt-card-label">{col.label}</span>
+                          <span className="dt-card-value">
+                            {col.render ? col.render(row[col.key], row) : formatCell(col, row[col.key])}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
-          </tbody>
-        </table>
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
