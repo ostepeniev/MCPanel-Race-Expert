@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 100" fill="none">
+  <!-- Arrow chevrons mark -->
+  <g transform="translate(0, 5)">
+    <!-- Bottom chevron (dark/black) -->
+    <path d="M10 70 L35 45 L60 70" stroke="#1A1A1A" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <!-- Top chevron (blue) -->
+    <path d="M35 45 L60 20 L85 45" stroke="#2D7DD2" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+  <!-- Text: RACE EXPERT -->
+  <text x="105" y="65" font-family="Inter, Arial, sans-serif" font-weight="800" font-size="48" fill="#F0F0F5" letter-spacing="-1">RACE EXPERT</text>
+</svg>
