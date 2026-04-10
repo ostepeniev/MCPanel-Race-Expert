@@ -2,6 +2,7 @@
 
 import useSWR from 'swr';
 import KPICard from '../components/KPICard';
+import DrillLink from '../components/DrillLink';
 
 const fetcher = (url) => fetch(url).then(res => res.json());
 
@@ -164,6 +165,12 @@ export default function FinancePage() {
             {data?.balance?.net_balance?.toLocaleString('uk-UA')} ₴
           </div>
         )}
+      </div>
+
+      {/* Cross-links */}
+      <div className="grid-2 page-section">
+        <DrillLink href="/sales" label="Аналіз продажів" icon="💰" />
+        <DrillLink href="/orders" label="Деталі замовлень" icon="📦" />
       </div>
     </div>
   );

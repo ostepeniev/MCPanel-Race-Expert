@@ -1,9 +1,9 @@
 'use client';
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Search } from 'lucide-react';
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 
 const TABS = [
   { label: 'COMMAND', href: '/' },
@@ -27,7 +27,16 @@ export default function TopNav({ period, onPeriodChange }) {
   return (
     <header className="topnav">
       <div className="topnav-inner">
-        {/* Tabs */}
+        {/* Mobile Logo — visible only on ≤768px */}
+        <Link href="/" className="topnav-mobile-logo" id="mobile-logo">
+          <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="topnav-logo-icon">
+            <path d="M15 75 L45 45 L75 75" stroke="rgba(255,255,255,0.3)" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M45 50 L75 20 L105 50" stroke="#2D7DD2" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="topnav-logo-text">RE</span>
+        </Link>
+
+        {/* Desktop Tabs */}
         <nav className="topnav-tabs">
           {TABS.map((tab) => {
             const isActive = pathname === tab.href;
@@ -46,7 +55,6 @@ export default function TopNav({ period, onPeriodChange }) {
 
         {/* Right side */}
         <div className="topnav-right">
-          {/* Date period picker */}
           <select
             className="topnav-period"
             value={period || 'current_month'}
@@ -58,7 +66,6 @@ export default function TopNav({ period, onPeriodChange }) {
             ))}
           </select>
 
-          {/* Search (disabled) */}
           <div className="topnav-search-wrapper">
             <button
               className="topnav-search"
@@ -76,7 +83,6 @@ export default function TopNav({ period, onPeriodChange }) {
             )}
           </div>
 
-          {/* Live indicator */}
           <div className="topnav-live" id="live-indicator">
             <span className="topnav-live-dot" />
             <span>Live</span>
@@ -86,5 +92,3 @@ export default function TopNav({ period, onPeriodChange }) {
     </header>
   );
 }
-
-

@@ -2,6 +2,7 @@
 
 import useSWR from 'swr';
 import DataTable from '../components/DataTable';
+import DrillLink from '../components/DrillLink';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const fetcher = (url) => fetch(url).then(res => res.json());
@@ -126,6 +127,12 @@ export default function SalesPage() {
             </ResponsiveContainer>
           )}
         </div>
+      </div>
+
+      {/* Cross-links */}
+      <div className="grid-2 page-section">
+        <DrillLink href="/finance" label="Фінансовий аналіз виручки" icon="💵" variant="block" />
+        <DrillLink href="/orders" label="Деталі замовлень" icon="📦" variant="block" />
       </div>
     </div>
   );

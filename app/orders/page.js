@@ -4,6 +4,7 @@ import useSWR from 'swr';
 import KPICard from '../components/KPICard';
 import MiniChart from '../components/MiniChart';
 import StatusBadge from '../components/StatusBadge';
+import DrillLink from '../components/DrillLink';
 
 const fetcher = (url) => fetch(url).then(res => res.json());
 
@@ -140,6 +141,12 @@ export default function OrdersPage() {
         ) : (
           <MiniChart data={data?.trend || []} dataKey="orders" color="#B388FF" height={180} showAxis={true} />
         )}
+      </div>
+
+      {/* Cross-links */}
+      <div className="grid-2 page-section">
+        <DrillLink href="/warehouse" label="Стан відвантажень" icon="🏭" />
+        <DrillLink href="/finance" label="Фінансові показники" icon="💵" />
       </div>
     </div>
   );

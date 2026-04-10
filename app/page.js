@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useRef } from 'react';
 import useSWR from 'swr';
+import Link from 'next/link';
 import MiniChart from './components/MiniChart';
+import DrillLink, { QuickNavCard } from './components/DrillLink';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 const fetcher = (url) => fetch(url).then(res => res.json());
@@ -118,6 +120,7 @@ export default function CommandCenter() {
                 {tickerProgress.toFixed(1)}% від місячної цілі
               </div>
             </div>
+            <DrillLink href="/sales" label="Аналіз продажів" icon="💰" />
           </>
         )}
       </div>
@@ -127,10 +130,10 @@ export default function CommandCenter() {
         <h3 className="cmd-section-title">🎯 Цілі місяця</h3>
         <div className="cmd-goals-grid">
           {!isLoading && cmd?.goals && [
-            { key: 'revenue', label: 'Виручка', icon: '💰', current: cmd.goals.revenue.current, target: cmd.goals.revenue.target, format: 'currency', projected: cmd.goals.revenue.projected },
-            { key: 'orders', label: 'Замовлення', icon: '📦', current: cmd.goals.orders.current, target: cmd.goals.orders.target, format: 'number', projected: cmd.goals.orders.projected },
-            { key: 'margin', label: 'Маржа', icon: '📊', current: cmd.goals.margin.current, target: cmd.goals.margin.target, format: 'percent' },
-            { key: 'ship_time', label: 'Відвантаження', icon: '🚀', current: cmd.goals.ship_time.current, target: cmd.goals.ship_time.target, format: 'hours', invert: true },
+            { key: 'revenue', label: 'Виручка', icon: '💰', href: '/sales', current: cmd.goals.revenue.current, target: cmd.goals.revenue.target, format: 'currency', projected: cmd.goals.revenue.projected },
+            { key: 'orders', label: 'Замовлення', icon: '📦', href: '/orders', current: cmd.goals.orders.current, target: cmd.goals.orders.target, format: 'number', projected: cmd.goals.orders.projected },
+            { key: 'margin', label: 'Маржа', icon: '📊', href: '/finance', current: cmd.goals.margin.current, target: cmd.goals.margin.target, format: 'percent' },
+            { key: 'ship_time', label: 'Відвантаження', icon: '🚀', href: '/warehouse', current: cmd.goals.ship_time.current, target: cmd.goals.ship_time.target, format: 'hours', invert: true },
           ].map(g => {
             const pct = g.invert
               ? Math.min(100, (g.target / Math.max(g.current, 0.1)) * 100)
@@ -143,7 +146,7 @@ export default function CommandCenter() {
               return v;
             };
             return (
-              <div key={g.key} className="glass-card-static cmd-goal-card">
+              <Link key={g.key} href={g.href} className="glass-card-static cmd-goal-card cmd-goal-clickable">
                 <ProgressRing percent={pct} size={72} stroke={6}>
                   <div className="cmd-goal-pct">{Math.round(pct)}%</div>
                 </ProgressRing>
@@ -156,7 +159,7 @@ export default function CommandCenter() {
                     </div>
                   )}
                 </div>
-              </div>
+              </Link>
             );
           })}
           {isLoading && [1, 2, 3, 4].map(i => (
@@ -206,6 +209,7 @@ export default function CommandCenter() {
               })}
             </div>
           )}
+          <DrillLink href="/finance" label="Фінансова звітність" icon="📊" />
         </div>
 
         {/* Attention Required */}
@@ -216,13 +220,14 @@ export default function CommandCenter() {
           ) : (
             <div className="cmd-rows">
               {(cmd?.alerts || []).map((alert, i) => (
-                <div key={i} className={`cmd-alert cmd-alert-${alert.type}`}>
+                <Link key={i} href={alert.text.includes('відвантаження') ? '/warehouse' : '/orders'} className={`cmd-alert cmd-alert-${alert.type} cmd-alert-clickable`}>
                   <span className="cmd-alert-icon">{alert.icon}</span>
                   <span className="cmd-alert-text">{alert.text}</span>
-                </div>
+                </Link>
               ))}
             </div>
           )}
+          <DrillLink href="/warehouse" label="Стан складу" icon="🏭" />
         </div>
       </div>
 
@@ -256,6 +261,7 @@ export default function CommandCenter() {
             })}
           </div>
         )}
+        <DrillLink href="/sales" label="Всі продажі по продуктах" icon="🏷️" />
       </div>
 
       {/* ═══ FEATURE 6: 30-Day Revenue Trend ═══ */}
@@ -325,6 +331,7 @@ export default function CommandCenter() {
           ) : (
             <MiniChart data={orders?.trend || []} dataKey="orders" color="#B388FF" height={160} showAxis={true} />
           )}
+          <DrillLink href="/orders" label="Всі замовлення" icon="📦" />
         </div>
         <div className="glass-card-static">
           <h3 className="cmd-card-title">🚛 Відвантаження · 7 днів</h3>
@@ -333,6 +340,46 @@ export default function CommandCenter() {
           ) : (
             <MiniChart data={warehouse?.shipTrend || []} dataKey="shipped" color="#00E676" height={160} showAxis={true} />
           )}
+          <DrillLink href="/warehouse" label="Журнал складу" icon="🏭" />
+        </div>
+      </div>
+
+      {/* ═══ Quick Navigation ═══ */}
+      <div className="cmd-section">
+        <h3 className="cmd-section-title">⚡ Швидкий доступ</h3>
+        <div className="cmd-goals-grid">
+          <QuickNavCard
+            href="/orders"
+            icon="📦"
+            title="Замовлення"
+            value={!isLoading ? `${orders?.today?.count || 0} сьогодні` : '...'}
+            subtitle="Статуси та оплата"
+            color="#B388FF"
+          />
+          <QuickNavCard
+            href="/sales"
+            icon="💰"
+            title="Продажі"
+            value={!isLoading ? `${finance?.kpis?.order_count || 0} за місяць` : '...'}
+            subtitle="Бренди та категорії"
+            color="#00E676"
+          />
+          <QuickNavCard
+            href="/warehouse"
+            icon="🏭"
+            title="Склад"
+            value={!isLoading ? `${warehouse?.totalDelayed || 0} затримок` : '...'}
+            subtitle="Відвантаження"
+            color="#FFC107"
+          />
+          <QuickNavCard
+            href="/finance"
+            icon="💵"
+            title="Фінанси"
+            value={!isLoading ? `${((finance?.kpis?.margin || 0)).toFixed(0)}% маржа` : '...'}
+            subtitle="Баланс та прибуток"
+            color="#FF5252"
+          />
         </div>
       </div>
     </div>
