@@ -1,0 +1,407 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ═══════════════════════════════════════
+// AUTH & SYSTEM
+// ═══════════════════════════════════════
+
+enum UserRole {
+  CEO
+  MANAGER
+  VIEWER
+}
+
+enum Department {
+  ALL
+  ORDERS
+  SALES
+  WAREHOUSE
+  FINANCE
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String     @map("password_hash")
+  name         String
+  role         UserRole   @default(VIEWER)
+  department   Department @default(ALL)
+  isActive     Boolean    @default(true) @map("is_active")
+  lastLoginAt  DateTime?  @map("last_login_at")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  auditLogs AuditLog[]
+
+  @@map("users")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  action    String
+  details   Json?
+  ip        String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ═══════════════════════════════════════
+// SYNC & MONITORING
+// ═══════════════════════════════════════
+
+enum SyncSource {
+  KEYCRM
+  MONOPAY
+  ONEC
+}
+
+enum SyncStatus {
+  RUNNING
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+model SyncLog {
+  id            String     @id @default(cuid())
+  source        SyncSource
+  status        SyncStatus
+  recordsSynced Int        @default(0) @map("records_synced")
+  recordsFailed Int        @default(0) @map("records_failed")
+  errorMessage  String?    @map("error_message")
+  durationMs    Int?       @map("duration_ms")
+  triggeredBy   String?    @map("triggered_by")
+  startedAt     DateTime   @default(now()) @map("started_at")
+  completedAt   DateTime?  @map("completed_at")
+  metadata      Json?
+
+  @@index([source, startedAt])
+  @@index([status])
+  @@map("sync_logs")
+}
+
+model SyncCursor {
+  id        String     @id @default(cuid())
+  source    SyncSource @unique
+  cursor    String
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  @@map("sync_cursors")
+}
+
+// ═══════════════════════════════════════
+// ALERTS
+// ═══════════════════════════════════════
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  DANGER
+  CRITICAL
+}
+
+enum AlertOperator {
+  GT
+  LT
+  GTE
+  LTE
+  CHANGE_GT
+  CHANGE_LT
+}
+
+model AlertRule {
+  id            String        @id @default(cuid())
+  name          String
+  metric        String
+  operator      AlertOperator
+  threshold     Float
+  severity      AlertSeverity @default(WARNING)
+  isActive      Boolean       @default(true) @map("is_active")
+  cooldownMin   Int           @default(60) @map("cooldown_min")
+  lastTriggered DateTime?     @map("last_triggered")
+  drillPage     String?       @map("drill_page")
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  events AlertEvent[]
+
+  @@map("alert_rules")
+}
+
+model AlertEvent {
+  id             String        @id @default(cuid())
+  ruleId         String        @map("rule_id")
+  severity       AlertSeverity
+  message        String
+  currentValue   Float         @map("current_value")
+  drillContext    Json?         @map("drill_context")
+  acknowledged   Boolean       @default(false)
+  acknowledgedBy String?       @map("acknowledged_by")
+  acknowledgedAt DateTime?     @map("acknowledged_at")
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  rule AlertRule @relation(fields: [ruleId], references: [id])
+
+  @@index([acknowledged, createdAt])
+  @@index([ruleId])
+  @@map("alert_events")
+}
+
+// ═══════════════════════════════════════
+// BUSINESS DATA — PRODUCTS
+// ═══════════════════════════════════════
+
+model Brand {
+  id         String   @id @default(cuid())
+  externalId String?  @unique @map("external_id")
+  name       String
+  country    String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  products Product[]
+
+  @@map("brands")
+}
+
+model Category {
+  id         String   @id @default(cuid())
+  externalId String?  @unique @map("external_id")
+  name       String
+  parentId   String?  @map("parent_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryTree")
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id         String   @id @default(cuid())
+  externalId String?  @unique @map("external_id")
+  sku        String?  @unique
+  name       String
+  brandId    String?  @map("brand_id")
+  categoryId String?  @map("category_id")
+  price      Float    @default(0)
+  cost       Float    @default(0)
+  isBundle   Boolean  @default(false) @map("is_bundle")
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  brand      Brand?     @relation(fields: [brandId], references: [id])
+  category   Category?  @relation(fields: [categoryId], references: [id])
+  inventory  Inventory?
+  orderItems OrderItem[]
+
+  @@index([brandId])
+  @@index([categoryId])
+  @@map("products")
+}
+
+model Inventory {
+  id        String   @id @default(cuid())
+  productId String   @unique @map("product_id")
+  quantity  Int      @default(0)
+  reserved  Int      @default(0)
+  warehouse String?  @default("main")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("inventory")
+}
+
+// ═══════════════════════════════════════
+// BUSINESS DATA — ORDERS
+// ═══════════════════════════════════════
+
+enum OrderStatus {
+  NEW
+  AWAITING_PAYMENT
+  AGREEMENT
+  PRODUCTION
+  PACKED
+  SHIPPED
+  DELIVERED
+  RETURNED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIAL
+  PAID
+  COD
+  REFUNDED
+}
+
+model Customer {
+  id          String   @id @default(cuid())
+  externalId  String?  @unique @map("external_id")
+  name        String
+  email       String?
+  phone       String?
+  type        String   @default("retail")
+  tags        String[] @default([])
+  totalOrders Int      @default(0) @map("total_orders")
+  totalSpent  Float    @default(0) @map("total_spent")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  orders Order[]
+
+  @@index([type])
+  @@index([createdAt])
+  @@map("customers")
+}
+
+model Order {
+  id             String        @id @default(cuid())
+  externalId     String?       @unique @map("external_id")
+  orderNumber    String?       @map("order_number")
+  customerId     String?       @map("customer_id")
+  status         OrderStatus   @default(NEW)
+  paymentStatus  PaymentStatus @default(UNPAID) @map("payment_status")
+  totalAmount    Float         @default(0) @map("total_amount")
+  discountAmount Float         @default(0) @map("discount_amount")
+  shippingCost   Float         @default(0) @map("shipping_cost")
+  source         String?
+  createdAt      DateTime      @default(now()) @map("created_at")
+  confirmedAt    DateTime?     @map("confirmed_at")
+  packedAt       DateTime?     @map("packed_at")
+  shippedAt      DateTime?     @map("shipped_at")
+  deliveredAt    DateTime?     @map("delivered_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  customer Customer?   @relation(fields: [customerId], references: [id])
+  items    OrderItem[]
+
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+  @@index([shippedAt])
+  @@index([customerId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String  @map("order_id")
+  productId   String? @map("product_id")
+  productName String  @map("product_name")
+  quantity    Int     @default(1)
+  unitPrice   Float   @map("unit_price")
+  unitCost    Float   @default(0) @map("unit_cost")
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+// ═══════════════════════════════════════
+// BUSINESS DATA — FINANCE
+// ═══════════════════════════════════════
+
+enum AccountType {
+  BANK
+  CASH
+  CARD
+  OTHER
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+model FinanceAccount {
+  id       String      @id @default(cuid())
+  name     String
+  type     AccountType
+  balance  Float       @default(0)
+  currency String      @default("UAH")
+  isActive Boolean     @default(true) @map("is_active")
+  lastSyncAt DateTime? @map("last_sync_at")
+
+  transactions Transaction[]
+
+  @@map("finance_accounts")
+}
+
+model Transaction {
+  id          String          @id @default(cuid())
+  accountId   String          @map("account_id")
+  externalId  String?         @unique @map("external_id")
+  type        TransactionType
+  amount      Float
+  description String?
+  category    String?
+  orderId     String?         @map("order_id")
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  account FinanceAccount @relation(fields: [accountId], references: [id])
+
+  @@index([accountId, createdAt])
+  @@index([type])
+  @@index([category])
+  @@map("transactions")
+}
+
+model Receivable {
+  id         String    @id @default(cuid())
+  debtorType String    @map("debtor_type")
+  debtorName String    @map("debtor_name")
+  amount     Float
+  dueDate    DateTime? @map("due_date")
+  isPaid     Boolean   @default(false) @map("is_paid")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@index([isPaid])
+  @@map("receivables")
+}
+
+model Payable {
+  id           String    @id @default(cuid())
+  creditorType String    @map("creditor_type")
+  creditorName String    @map("creditor_name")
+  amount       Float
+  dueDate      DateTime? @map("due_date")
+  isPaid       Boolean   @default(false) @map("is_paid")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@index([isPaid])
+  @@map("payables")
+}
+
+// ═══════════════════════════════════════
+// TARGETS (Plan-Fact)
+// ═══════════════════════════════════════
+
+model MonthlyTarget {
+  id          String  @id @default(cuid())
+  year        Int
+  month       Int
+  metric      String
+  targetValue Float   @map("target_value")
+  createdBy   String? @map("created_by")
+
+  @@unique([year, month, metric])
+  @@map("monthly_targets")
+}

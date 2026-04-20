@@ -27,11 +27,15 @@ npm-debug.log*
 # vercel
 .vercel
 
-# SQLite journal files (not needed for deployment)
+# SQLite (legacy v1)
 *.db-shm
 *.db-wal
 *.db-journal
+data/mcpanel.db
 
-# NOTE: data/mcpanel.db is INTENTIONALLY tracked in git
-# It contains pre-seeded demo data needed for the Vercel deployment
+# Logs (v2 — Winston)
+/logs/
+
+# Prisma
+prisma/migrations/**/migration_lock.toml
 
