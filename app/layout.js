@@ -1,4 +1,5 @@
 import './globals.css';
+import Providers from './providers';
 import AppShell from './components/AppShell';
 
 export const metadata = {
@@ -18,9 +19,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="uk">
       <body>
-        <AppShell>
-          {children}
-        </AppShell>
+        <Providers>
+          <AppShell>
+            {children}
+          </AppShell>
+        </Providers>
       </body>
     </html>
   );

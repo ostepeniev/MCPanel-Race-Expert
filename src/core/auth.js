@@ -1,18 +1,16 @@
 /**
- * NextAuth.js v5 configuration.
+ * NextAuth.js v5 configuration — ENV-based single-user mode.
  *
- * Provider: Credentials (email + password)
- * Session: JWT (30 days)
- * Callbacks: attach role + department to token/session
+ * Credentials are stored in .env.local (ADMIN_USERNAME, ADMIN_PASSWORD).
+ * When PostgreSQL is connected, switch to Prisma-based user lookup.
+ *
+ * Session: JWT (30 days), HttpOnly cookie.
  *
  * @module core/auth
  */
 
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import bcrypt from 'bcryptjs';
-import { prisma } from '@/src/shared/lib/prisma';
-import { logger } from '@/src/shared/lib/logger';
 
 export const {
   handlers,
@@ -28,73 +26,64 @@ export const {
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60,   // refresh token every 24h
+  },
+
+  cookies: {
+    sessionToken: {
+      name: 'mcpanel.session',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
   },
 
   providers: [
     CredentialsProvider({
-      name: 'credentials',
+      name: 'MCPanel',
       credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
+        username: { label: 'Логін', type: 'text' },
+        password: { label: 'Пароль', type: 'password' },
       },
 
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        // ENV-based single-user mode
+        const adminUser = process.env.ADMIN_USERNAME;
+        const adminPass = process.env.ADMIN_PASSWORD;
+
+        console.log('[Auth] Authorize called with:', {
+          receivedUsername: credentials?.username,
+          expectedUsername: adminUser,
+          hasPassword: !!credentials?.password,
+          credentialKeys: credentials ? Object.keys(credentials) : [],
+        });
+
+        if (!adminUser || !adminPass) {
+          console.error('[Auth] ADMIN_USERNAME or ADMIN_PASSWORD not set in .env.local');
           return null;
         }
 
-        try {
-          const user = await prisma.user.findUnique({
-            where: { email: credentials.email },
-            select: {
-              id: true,
-              email: true,
-              name: true,
-              passwordHash: true,
-              role: true,
-              department: true,
-              isActive: true,
-            },
-          });
+        // Compare credentials (trim whitespace for safety)
+        const usernameMatch = credentials?.username?.trim() === adminUser.trim();
+        const passwordMatch = credentials?.password?.trim() === adminPass.trim();
 
-          if (!user || !user.isActive) {
-            logger.warn('Login failed: user not found or inactive', {
-              email: credentials.email,
-            });
-            return null;
-          }
-
-          const isValid = await bcrypt.compare(
-            credentials.password,
-            user.passwordHash
-          );
-
-          if (!isValid) {
-            logger.warn('Login failed: invalid password', {
-              email: credentials.email,
-            });
-            return null;
-          }
-
-          // Update last login
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { lastLoginAt: new Date() },
-          });
-
-          logger.audit('login', user.id, { email: user.email, role: user.role });
-
+        if (usernameMatch && passwordMatch) {
+          console.log('[Auth] ✅ Login successful');
           return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.role,
-            department: user.department,
+            id: 'admin-001',
+            name: 'CEO Race Expert',
+            email: 'ceo@raceexpert.com.ua',
+            role: 'CEO',
+            department: 'ALL',
           };
-        } catch (error) {
-          logger.error('Auth error', { error: error.message });
-          return null;
         }
+
+        // Invalid credentials
+        console.warn(`[Auth] ❌ Failed login: username=${usernameMatch}, password=${passwordMatch}`);
+        return null;
       },
     }),
   ],
@@ -106,6 +95,7 @@ export const {
         token.id = user.id;
         token.role = user.role;
         token.department = user.department;
+        token.loginAt = new Date().toISOString();
       }
       return token;
     },
@@ -118,19 +108,6 @@ export const {
         session.user.department = token.department;
       }
       return session;
-    },
-
-    async authorized({ auth, request }) {
-      const isLoggedIn = !!auth?.user;
-      const isLoginPage = request.nextUrl.pathname === '/login';
-      const isPublicApi =
-        request.nextUrl.pathname.startsWith('/api/auth') ||
-        request.nextUrl.pathname.startsWith('/api/health') ||
-        request.nextUrl.pathname.startsWith('/api/sync/webhook');
-
-      if (isPublicApi) return true;
-      if (isLoginPage) return !isLoggedIn ? true : Response.redirect(new URL('/', request.url));
-      return isLoggedIn;
     },
   },
 });
