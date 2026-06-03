@@ -7,12 +7,12 @@
  * Single-user auth: Admin / Rozum
  */
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Shield, Eye, EyeOff, AlertTriangle, Loader2 } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/';
@@ -76,6 +76,90 @@ export default function LoginPage() {
   }
 
   return (
+    <form onSubmit={handleSubmit} className="login-card" autoComplete="off">
+      {/* Logo */}
+      <div className="login-logo">
+        <div className="login-logo-icon">
+          <Shield size={32} />
+        </div>
+        <h1 className="login-title">MCPanel</h1>
+        <p className="login-subtitle">Mission Control · Race Expert</p>
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="login-error">
+          <AlertTriangle size={16} />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Username */}
+      <div className="login-field">
+        <label htmlFor="login-username">Логін</label>
+        <input
+          id="login-username"
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Введіть логін"
+          autoComplete="username"
+          disabled={isLoading || isBlocked}
+          autoFocus
+        />
+      </div>
+
+      {/* Password */}
+      <div className="login-field">
+        <label htmlFor="login-password">Пароль</label>
+        <div className="login-password-wrapper">
+          <input
+            id="login-password"
+            type={showPassword ? 'text' : 'password'}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Введіть пароль"
+            autoComplete="current-password"
+            disabled={isLoading || isBlocked}
+          />
+          <button
+            type="button"
+            className="login-password-toggle"
+            onClick={() => setShowPassword(!showPassword)}
+            tabIndex={-1}
+            aria-label={showPassword ? 'Сховати пароль' : 'Показати пароль'}
+          >
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Submit */}
+      <button
+        type="submit"
+        className="login-submit"
+        disabled={isLoading || isBlocked}
+      >
+        {isLoading ? (
+          <>
+            <Loader2 size={18} className="login-spinner" />
+            Вхід...
+          </>
+        ) : (
+          'Увійти'
+        )}
+      </button>
+
+      {/* Security notice */}
+      <p className="login-security-note">
+        🔒 Захищене з&apos;єднання · Сесія 30 днів
+      </p>
+    </form>
+  );
+}
+
+export default function LoginPage() {
+  return (
     <div className="login-page">
       <div className="login-bg-effects">
         <div className="login-orb login-orb-1" />
@@ -83,85 +167,9 @@ export default function LoginPage() {
         <div className="login-orb login-orb-3" />
       </div>
 
-      <form onSubmit={handleSubmit} className="login-card" autoComplete="off">
-        {/* Logo */}
-        <div className="login-logo">
-          <div className="login-logo-icon">
-            <Shield size={32} />
-          </div>
-          <h1 className="login-title">MCPanel</h1>
-          <p className="login-subtitle">Mission Control · Race Expert</p>
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div className="login-error">
-            <AlertTriangle size={16} />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {/* Username */}
-        <div className="login-field">
-          <label htmlFor="login-username">Логін</label>
-          <input
-            id="login-username"
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Введіть логін"
-            autoComplete="username"
-            disabled={isLoading || isBlocked}
-            autoFocus
-          />
-        </div>
-
-        {/* Password */}
-        <div className="login-field">
-          <label htmlFor="login-password">Пароль</label>
-          <div className="login-password-wrapper">
-            <input
-              id="login-password"
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Введіть пароль"
-              autoComplete="current-password"
-              disabled={isLoading || isBlocked}
-            />
-            <button
-              type="button"
-              className="login-password-toggle"
-              onClick={() => setShowPassword(!showPassword)}
-              tabIndex={-1}
-              aria-label={showPassword ? 'Сховати пароль' : 'Показати пароль'}
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-          </div>
-        </div>
-
-        {/* Submit */}
-        <button
-          type="submit"
-          className="login-submit"
-          disabled={isLoading || isBlocked}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 size={18} className="login-spinner" />
-              Вхід...
-            </>
-          ) : (
-            'Увійти'
-          )}
-        </button>
-
-        {/* Security notice */}
-        <p className="login-security-note">
-          🔒 Захищене з&apos;єднання · Сесія 30 днів
-        </p>
-      </form>
+      <Suspense fallback={<div className="login-spinner-dot" />}>
+        <LoginForm />
+      </Suspense>
     </div>
   );
 }
