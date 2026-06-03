@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MCPanel Diagrams</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <style>
+    body {
+      background: #0A0A0C;
+      color: #F5F5F5;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 40px;
+      margin: 0;
+    }
+    .diagram-section {
+      margin-bottom: 80px;
+      page-break-after: always;
+    }
+    h2 {
+      font-size: 28px;
+      margin-bottom: 30px;
+      color: #00E676;
+      text-align: center;
+    }
+    .mermaid {
+      display: flex;
+      justify-content: center;
+    }
+    .mermaid svg {
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="diagram1" class="diagram-section">
+    <h2>🏗️ Архітектура MCPanel v2.0</h2>
+    <pre class="mermaid">
+graph TB
+    subgraph BROWSER["🖥️ Інтерфейс CEO"]
+        LOGIN["🔐 Захищений вхід"]
+        DASH["📊 Command Center"]
+        ORDERS["📦 Замовлення"]
+        SALES["💰 Продажі"]
+        WH["🏭 Склад"]
+        FIN["💳 Фінанси"]
+        ALERTS["🚨 Smart Alerts"]
+        SETTINGS["⚙️ Налаштування"]
+    end
+
+    subgraph SERVER["⚡ Сервер Next.js + Node.js"]
+        AUTH["🛡️ Авторизація + RBAC"]
+        API["📡 9 бізнес-модулів"]
+        EVENTBUS["📨 Event Bus"]
+        LOGGER["📝 Логування 4 канали"]
+        CRON["⏰ Cron Scheduler"]
+        ALERTENG["🧠 Alert Engine"]
+    end
+
+    subgraph EXTERNAL["🌐 Зовнішні системи"]
+        KEYCRM["KEY CRM API"]
+        MONO["MonoPay API"]
+        ONEC["1С"]
+    end
+
+    subgraph INFRA["🏛️ Інфраструктура"]
+        DB["🗄️ PostgreSQL 18 таблиць"]
+        LOGS["📂 Логи 90 днів"]
+        PM2["🔄 PM2 авто-рестарт"]
+        NGINX["🌐 Nginx + SSL"]
+    end
+
+    BROWSER --> AUTH
+    AUTH --> API
+    API --> DB
+    API --> EVENTBUS
+    EVENTBUS --> ALERTENG
+    CRON --> KEYCRM
+    CRON --> MONO
+    CRON --> ONEC
+    CRON --> DB
+    ALERTENG --> ALERTS
+    LOGGER --> LOGS
+    SERVER --> INFRA
+
+    style BROWSER fill:#1a1a2e,stroke:#00E676,color:#fff
+    style SERVER fill:#16213e,stroke:#448AFF,color:#fff
+    style EXTERNAL fill:#0f3460,stroke:#FFD740,color:#fff
+    style INFRA fill:#1a1a2e,stroke:#FF3D3D,color:#fff
+    </pre>
+  </div>
+
+  <div id="diagram2" class="diagram-section">
+    <h2>📐 Модульна архітектура — 9 модулів</h2>
+    <pre class="mermaid">
+graph LR
+    subgraph MODULES["src/modules/ — 9 ізольованих модулів"]
+        AUTH["🔐 auth"]
+        CMD["📊 command"]
+        ORD["📦 orders"]
+        SAL["💰 sales"]
+        WH["🏭 warehouse"]
+        FIN["💳 finance"]
+        SYNC["🔄 sync"]
+        ALR["🚨 alerts"]
+        ADM["⚙️ admin"]
+    end
+
+    subgraph STRUCTURE["Кожен модуль має:"]
+        A["api/ — публічний інтерфейс"]
+        D["domain/ — бізнес-логіка"]
+        DA["data/ — робота з БД"]
+        U["ui/ — інтерфейс"]
+        R["README.md — документація"]
+    end
+
+    AUTH --> A
+    CMD --> A
+    ORD --> A
+
+    style MODULES fill:#1a1a2e,stroke:#00E676,color:#fff
+    style STRUCTURE fill:#16213e,stroke:#448AFF,color:#fff
+    </pre>
+  </div>
+
+  <div id="diagram3" class="diagram-section">
+    <h2>🔮 Фундамент для AI</h2>
+    <pre class="mermaid">
+graph TB
+    CEO["CEO запитує: Чому впала маржа на 226ERS?"]
+    AI["🤖 AI Agent GPT-4 / Claude"]
+    API["MCPanel API вже готовий"]
+    DB["PostgreSQL дані вже є"]
+    ANSWER["Відповідь: Маржа впала через зростання закупівельної ціни на 8% з 12.04"]
+
+    CEO --> AI
+    AI --> API
+    API --> DB
+    DB --> AI
+    AI --> ANSWER
+
+    style CEO fill:#1a1a2e,stroke:#00E676,color:#fff
+    style AI fill:#16213e,stroke:#FFD740,color:#fff
+    style ANSWER fill:#0f3460,stroke:#00E676,color:#fff
+    </pre>
+  </div>
+
+  <div id="diagram4" class="diagram-section">
+    <h2>🔄 Сценарій передачі іншому розробнику</h2>
+    <pre class="mermaid">
+graph LR
+    A["📋 Документація вже є"] --> B["👨‍💻 Новий розробник читає README"]
+    B --> C["🔍 Вивчає 1 модуль ~150 рядків"]
+    C --> D["✏️ Робить зміну ESLint перевіряє"]
+    D --> E["🧪 Тестує npm run dev"]
+    E --> F["🚀 Деплоїть git push"]
+
+    style A fill:#1a1a2e,stroke:#00E676,color:#fff
+    style F fill:#0f3460,stroke:#00E676,color:#fff
+    </pre>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      themeVariables: {
+        primaryColor: '#16213e',
+        primaryTextColor: '#F5F5F5',
+        primaryBorderColor: '#448AFF',
+        lineColor: '#448AFF',
+        secondaryColor: '#1a1a2e',
+        tertiaryColor: '#0f3460',
+        fontFamily: 'Segoe UI, sans-serif',
+        fontSize: '14px',
+      },
+      flowchart: {
+        curve: 'basis',
+        padding: 20,
+      }
+    });
+  </script>
+</body>
+</html>

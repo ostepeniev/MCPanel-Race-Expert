@@ -13,14 +13,7 @@ const TABS = [
   { label: 'ФІНАНСИ', href: '/finance' },
 ];
 
-const PERIODS = [
-  { label: 'Сьогодні', value: 'today' },
-  { label: 'Вчора', value: 'yesterday' },
-  { label: 'Поточний місяць', value: 'current_month' },
-  { label: 'Минулий місяць', value: 'prev_month' },
-];
-
-export default function TopNav({ period, onPeriodChange }) {
+export default function TopNav() {
   const pathname = usePathname();
   const [searchTooltip, setSearchTooltip] = useState(false);
 
@@ -55,17 +48,6 @@ export default function TopNav({ period, onPeriodChange }) {
 
         {/* Right side */}
         <div className="topnav-right">
-          <select
-            className="topnav-period"
-            value={period || 'current_month'}
-            onChange={(e) => onPeriodChange?.(e.target.value)}
-            id="period-select"
-          >
-            {PERIODS.map((p) => (
-              <option key={p.value} value={p.value}>{p.label}</option>
-            ))}
-          </select>
-
           <div className="topnav-search-wrapper">
             <button
               className="topnav-search"
